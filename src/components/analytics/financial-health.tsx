@@ -7,7 +7,7 @@ import { mockRequest } from "@/lib/mock";
 import { toast } from "sonner";
 import {
   ShieldCheck,
-  HeartPulse,
+  Gauge,
   TrendingUp,
   CreditCard,
   Wallet,
@@ -101,7 +101,7 @@ export function FinancialHealth() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="flex size-7 items-center justify-center rounded-lg bg-gold/10 text-gold border border-gold/20">
-            <HeartPulse className="size-4" />
+            <Gauge className="size-4" />
           </div>
           <div>
             <h2 className="font-heading text-sm font-semibold text-foreground">
