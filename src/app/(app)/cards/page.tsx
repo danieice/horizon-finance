@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import { TopBar } from "@/components/shell/top-bar";
-import { SectionLabel } from "@/components/ui/section-label";
 import { VirtualCard } from "@/components/cards/virtual-card";
 import { CardActions } from "@/components/cards/card-actions";
 import { CvvReveal } from "@/components/cards/cvv-reveal";
 import { CardControls } from "@/components/cards/card-controls";
 import { useStore } from "@/store/useStore";
+import { Wallet } from "lucide-react";
+import { SectionHeader } from "@/components/ui/section-header";
 
 export default function CardsPage() {
   const cards = useStore((s) => s.cards);
@@ -57,7 +58,7 @@ export default function CardsPage() {
         <CvvReveal cvv={card.cvv} shown={cvvShown} onHide={() => setCvvShown(false)} />
 
         <div>
-          <SectionLabel>Spending</SectionLabel>
+          <SectionHeader icon={Wallet} title="Spending" />
           <CardControls card={card} />
         </div>
       </main>
