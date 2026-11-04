@@ -33,6 +33,77 @@ import { toast } from "sonner";
 
 const pageSize = 5;
 
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (character) => {
+    const entities: Record<string, string> = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;",
+    };
+    return entities[character];
+  });
+}
+
+function printReceipt(transaction: Transaction): boolean {
+  const printWindow = window.open("", "_blank", "popup,width=420,height=600");
+  if (!printWindow) return false;
+
+  const isTransfer = transaction.title.startsWith("Transfer to ");
+  const title = escapeHtml(isTransfer ? "Payee" : "Transaction");
+  const value = escapeHtml(
+    isTransfer ? transaction.title.replace("Transfer to ", "") : transaction.title
+  );
+  const reference = escapeHtml(transaction.memo);
+  const date = escapeHtml(new Date(transaction.date).toLocaleString("en-US"));
+  const amount = escapeHtml(formatAmount(transaction.amount, transaction.currency));
+
+  printWindow.document.write(`<!doctype html>
+    <html lang="en">
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Horizon Finance receipt</title>
+        <style>
+          @page { size: 80mm 70mm; margin: 0; }
+          * { box-sizing: border-box; }
+          html, body { width: 80mm; height: 70mm; margin: 0; background: #fff; color: #111; }
+          body { padding: 5mm; font: 12px Arial, sans-serif; }
+          main { width: 70mm; }
+          header { padding-bottom: 3mm; border-bottom: 1px dashed #999; }
+          h1 { margin: 0; font-size: 15px; font-weight: 600; }
+          header p { margin: 1mm 0 0; color: #555; font-size: 10px; }
+          .amount { padding: 4mm 0; text-align: center; border-bottom: 1px dashed #999; }
+          .amount p { margin: 0; color: #555; font-size: 10px; }
+          .amount strong { display: block; margin-top: 1mm; font-size: 20px; }
+          dl { margin: 3mm 0 0; }
+          dl div { display: flex; justify-content: space-between; gap: 4mm; margin-top: 2mm; }
+          dt { color: #555; }
+          dd { max-width: 46mm; margin: 0; text-align: right; overflow-wrap: anywhere; }
+        </style>
+      </head>
+      <body>
+        <main>
+          <header><h1>Transfer receipt</h1><p>Horizon Finance</p></header>
+          <section class="amount"><p>Transfer amount</p><strong>${amount}</strong></section>
+          <dl>
+            <div><dt>${title}</dt><dd>${value}</dd></div>
+            <div><dt>Reference</dt><dd>${reference}</dd></div>
+            <div><dt>Date</dt><dd>${date}</dd></div>
+          </dl>
+        </main>
+      </body>
+    </html>`);
+  printWindow.document.close();
+  printWindow.addEventListener("afterprint", () => printWindow.close(), { once: true });
+  printWindow.setTimeout(() => {
+    printWindow.focus();
+    printWindow.print();
+  }, 100);
+  return true;
+}
+
 const transferSchema = (availableUsd: number) =>
   z
     .object({
@@ -556,8 +627,8 @@ export function TransferWorkspace() {
       </main>
 
       {receipt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm print:static print:block print:bg-white print:p-0 print:backdrop-blur-none">
-          <Card className="w-full max-w-sm shadow-xl print:max-w-none print:rounded-none print:shadow-none print:ring-0">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm">
+          <Card className="w-full max-w-sm shadow-xl">
             <CardHeader className="flex-row items-start justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2">
@@ -577,17 +648,23 @@ export function TransferWorkspace() {
                 <X aria-hidden="true" />
               </Button>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="border-y border-dashed border-border py-4 text-center">
+            <CardContent className="space-y-3">
+              <div className="border-y border-dashed border-border py-3 text-center">
                 <p className="text-xs text-muted-foreground">Transfer amount</p>
                 <p className="mt-1 text-2xl font-semibold">
                   {formatAmount(receipt.amount, receipt.currency)}
                 </p>
               </div>
-              <dl className="space-y-3 text-sm">
+              <dl className="space-y-2 text-sm">
                 <div className="flex justify-between gap-4">
-                  <dt className="text-muted-foreground">Payee</dt>
-                  <dd className="text-right font-medium">{receipt.title.replace("Transfer to ", "")}</dd>
+                  <dt className="text-muted-foreground">
+                    {receipt.title.startsWith("Transfer to ") ? "Payee" : "Transaction"}
+                  </dt>
+                  <dd className="text-right font-medium">
+                    {receipt.title.startsWith("Transfer to ")
+                      ? receipt.title.replace("Transfer to ", "")
+                      : receipt.title}
+                  </dd>
                 </div>
                 <div className="flex justify-between gap-4">
                   <dt className="text-muted-foreground">Reference</dt>
@@ -602,7 +679,15 @@ export function TransferWorkspace() {
                   <dd className="max-w-40 truncate text-right font-mono text-xs">{receipt.id}</dd>
                 </div>
               </dl>
-              <Button className="w-full gap-2 print:hidden" type="button" onClick={() => window.print()}>
+              <Button
+                className="w-full gap-2"
+                type="button"
+                onClick={() => {
+                  if (!printReceipt(receipt)) {
+                    toast.error("Allow pop-ups to print the receipt.");
+                  }
+                }}
+              >
                 <Printer className="size-4" aria-hidden="true" />
                 Print receipt
               </Button>
