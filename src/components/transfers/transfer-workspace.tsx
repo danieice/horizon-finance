@@ -34,8 +34,8 @@ const pageSize = 5;
 const transferSchema = (availableUsd: number) =>
   z
     .object({
-      payeeId: z.string().min(1, "Choisissez un bénéficiaire."),
-      amount: z.number().finite("Saisissez un montant valide.").positive("Le montant doit être supérieur à zéro."),
+      payeeId: z.string().min(1, "Choose a payee."),
+      amount: z.number().finite("Enter a valid amount.").positive("Amount must be greater than zero."),
       currency: z.enum(["USD", "EUR", "GBP", "NGN", "XAF"]),
     })
     .superRefine(({ amount, currency }, context) => {
@@ -43,17 +43,17 @@ const transferSchema = (availableUsd: number) =>
         context.addIssue({
           code: "custom",
           path: ["amount"],
-          message: "Le montant dépasse votre solde disponible.",
+          message: "Amount exceeds your available balance.",
         });
       }
     });
 
 const payeeSchema = z.object({
-  name: z.string().min(1, "Saisissez un nom.").max(60, "Le nom est trop long."),
+  name: z.string().min(1, "Enter a name.").max(60, "Name is too long."),
   accountNumber: z
     .string()
-    .min(4, "Le numéro de compte doit contenir au moins 4 caractères.")
-    .max(34, "Le numéro de compte est trop long."),
+    .min(4, "Account number must contain at least 4 characters.")
+    .max(34, "Account number is too long."),
   currency: z.enum(["USD", "EUR", "GBP", "NGN", "XAF"]),
 });
 
@@ -140,21 +140,21 @@ export function TransferWorkspace() {
       currency,
     });
     if (!parsed.success) {
-      setTransferError(parsed.error.issues[0]?.message ?? "Vérifiez les informations saisies.");
+      setTransferError(parsed.error.issues[0]?.message ?? "Please check the information you entered.");
       return;
     }
 
     const payee = payees.find((item) => item.id === parsed.data.payeeId);
     if (!payee) {
-      setTransferError("Ce bénéficiaire n’est plus disponible.");
+      setTransferError("This payee is no longer available.");
       return;
     }
 
     const safeMemo = sanitizeText(memo);
     const transaction: Transaction = {
       id: `tx-${crypto.randomUUID()}`,
-      title: `Transfert vers ${payee.name}`,
-      memo: safeMemo || "Transfert",
+      title: `Transfer to ${payee.name}`,
+      memo: safeMemo || "Transfer",
       amount: parsed.data.amount,
       currency: parsed.data.currency,
       direction: "out",
@@ -170,9 +170,9 @@ export function TransferWorkspace() {
       setReceipt(completedTransfer);
       setAmount("");
       setMemo("");
-      toast.success("Transfert effectué.");
+      toast.success("Transfer sent.");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Le transfert a échoué.");
+      toast.error(error instanceof Error ? error.message : "Transfer failed.");
     } finally {
       setIsSending(false);
     }
@@ -188,7 +188,7 @@ export function TransferWorkspace() {
       currency: payeeCurrency,
     });
     if (!parsed.success) {
-      setPayeeError(parsed.error.issues[0]?.message ?? "Vérifiez les informations saisies.");
+      setPayeeError(parsed.error.issues[0]?.message ?? "Please check the information you entered.");
       return;
     }
 
@@ -205,9 +205,9 @@ export function TransferWorkspace() {
       setCurrency(savedPayee.currency);
       setPayeeName("");
       setPayeeAccount("");
-      toast.success("Bénéficiaire ajouté.");
+      toast.success("Payee added.");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Impossible d’ajouter le bénéficiaire.");
+      toast.error(error instanceof Error ? error.message : "Could not add payee.");
     } finally {
       setIsAddingPayee(false);
     }
@@ -229,7 +229,7 @@ export function TransferWorkspace() {
         <section className="rounded-2xl bg-card p-4 shadow-sm ring-1 ring-border/80">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Solde disponible</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Available balance</p>
               <p className={`mt-1.5 text-2xl font-semibold tracking-tight ${privacyMode ? "blur-sm select-none" : ""}`}>
                 {formatAmount(availableBalance, user.currency)}
               </p>
@@ -239,7 +239,7 @@ export function TransferWorkspace() {
             </span>
           </div>
           <p className="mt-3 border-t border-border/70 pt-2.5 text-xs text-muted-foreground">
-            Taux indicatifs · conversion simulée
+            Indicative rates · simulated conversion
           </p>
         </section>
 
@@ -249,20 +249,20 @@ export function TransferWorkspace() {
               <span className="flex size-9 items-center justify-center rounded-xl bg-gold/10">
                 <Send className="size-4 text-gold" aria-hidden="true" />
               </span>
-              <span>Nouveau transfert</span>
+              <span>New transfer</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <form className="space-y-4 border-t border-border/70 pt-4" onSubmit={submitTransfer} noValidate>
               <label className="block space-y-1.5 text-sm">
-                <span className="font-medium">Bénéficiaire</span>
+                <span className="font-medium">Payee</span>
                 <select
                   className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
                   value={payeeId}
                   onChange={(event) => setPayeeId(event.target.value)}
-                  aria-label="Bénéficiaire"
+                  aria-label="Payee"
                 >
-                  <option value="">Choisir un bénéficiaire</option>
+                  <option value="">Choose a payee</option>
                   {payees.map((payee) => (
                     <option key={payee.id} value={payee.id}>
                       {payee.name} · {payee.currency}
@@ -273,7 +273,7 @@ export function TransferWorkspace() {
 
               <div className="grid grid-cols-[1fr_6.5rem] gap-2">
                 <label className="space-y-1.5 text-sm">
-                  <span className="font-medium">Vous envoyez</span>
+                  <span className="font-medium">You send</span>
                   <Input
                     type="number"
                     min="0"
@@ -282,16 +282,16 @@ export function TransferWorkspace() {
                     placeholder="0,00"
                     value={amount}
                     onChange={(event) => setAmount(event.target.value)}
-                    aria-label="Montant à envoyer"
+                    aria-label="Amount to send"
                   />
                 </label>
                 <label className="space-y-1.5 text-sm">
-                  <span className="font-medium">Devise</span>
+                  <span className="font-medium">Currency</span>
                   <select
                     className="h-8 w-full rounded-lg border border-input bg-background px-2 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
                     value={currency}
                     onChange={(event) => setCurrency(event.target.value as Currency)}
-                    aria-label="Devise d’envoi"
+                    aria-label="Send currency"
                   >
                     {currencyOptions()}
                   </select>
@@ -300,7 +300,7 @@ export function TransferWorkspace() {
 
               {selectedPayee && (
                 <div className="flex items-center justify-between rounded-xl bg-muted/60 px-3.5 py-3 text-sm ring-1 ring-border/50">
-                  <span className="text-muted-foreground">Le bénéficiaire reçoit environ</span>
+                  <span className="text-muted-foreground">Recipient gets approximately</span>
                   <span className="font-medium">
                     {formatAmount(receiveAmount, selectedPayee.currency)}
                   </span>
@@ -308,7 +308,7 @@ export function TransferWorkspace() {
               )}
 
               <label className="block space-y-1.5 text-sm">
-                <span className="font-medium">Motif <span className="font-normal text-muted-foreground">(facultatif)</span></span>
+                <span className="font-medium">Reference <span className="font-normal text-muted-foreground">(optional)</span></span>
                 <Input
                   maxLength={120}
                   placeholder="Ex. Part du loyer"
@@ -322,11 +322,11 @@ export function TransferWorkspace() {
               )}
               <Button className="h-10 w-full gap-2" type="submit" disabled={isSending || payees.length === 0}>
                 {isSending ? <Clock3 className="size-4 animate-pulse" aria-hidden="true" /> : <Send className="size-4" aria-hidden="true" />}
-                {isSending ? "Envoi en cours…" : "Envoyer"}
+                {isSending ? "Sending…" : "Send"}
               </Button>
               {payees.length === 0 && (
                 <p className="text-center text-xs text-muted-foreground">
-                  Ajoutez un bénéficiaire pour effectuer un transfert.
+                  Add a payee to make a transfer.
                 </p>
               )}
             </form>
@@ -339,7 +339,7 @@ export function TransferWorkspace() {
               <span className="flex size-9 items-center justify-center rounded-xl bg-gold/10">
                 <ArrowLeftRight className="size-4 text-gold" aria-hidden="true" />
               </span>
-              Convertisseur de devises
+              Currency converter
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 border-t border-border/70 pt-4">
@@ -352,10 +352,10 @@ export function TransferWorkspace() {
                   step="any"
                   value={converterAmount}
                   onChange={(event) => setConverterAmount(event.target.value)}
-                  aria-label="Montant à convertir"
+                  aria-label="Amount to convert"
                 />
               </label>
-              <label className="sr-only" htmlFor="converter-from">Devise de départ</label>
+              <label className="sr-only" htmlFor="converter-from">From currency</label>
               <select
                 id="converter-from"
                 className="h-8 rounded-lg border border-input bg-background px-2 text-sm"
@@ -372,15 +372,15 @@ export function TransferWorkspace() {
                 type="button"
                 variant="outline"
                 onClick={switchConverterCurrencies}
-                aria-label="Inverser les devises"
+                aria-label="Swap currencies"
               >
                 <ArrowLeftRight className="size-4" aria-hidden="true" />
               </Button>
             </div>
             <div className="flex items-center justify-between rounded-xl bg-muted/60 px-3.5 py-3 ring-1 ring-border/50">
-              <span className="text-sm text-muted-foreground">Montant estimé</span>
+              <span className="text-sm text-muted-foreground">Estimated amount</span>
               <div className="text-right">
-                <label className="sr-only" htmlFor="converter-to">Devise d’arrivée</label>
+                <label className="sr-only" htmlFor="converter-to">To currency</label>
                 <select
                   id="converter-to"
                   className="mb-1 rounded border border-input bg-background px-1.5 py-0.5 text-xs"
@@ -410,10 +410,10 @@ export function TransferWorkspace() {
               <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
               <Input
                 className="pl-9"
-                placeholder="Rechercher une transaction"
+                placeholder="Search transactions"
                 value={search}
                 onChange={(event) => changeSearch(event.target.value)}
-                aria-label="Rechercher dans l’historique"
+                aria-label="Search transaction history"
               />
             </div>
           </CardHeader>
@@ -421,7 +421,7 @@ export function TransferWorkspace() {
             {visibleTransactions.length > 0 ? (
               <ul className="divide-y divide-border">
                 {isSending && (
-                  <li className="flex items-center gap-3 py-3" aria-label="Transfert en cours">
+                  <li className="flex items-center gap-3 py-3" aria-label="Transfer in progress">
                     <Skeleton className="size-9 shrink-0 rounded-full" />
                     <div className="min-w-0 flex-1 space-y-2">
                       <Skeleton className="h-3 w-2/3" />
@@ -436,7 +436,7 @@ export function TransferWorkspace() {
                       type="button"
                       className="flex w-full items-center gap-3 rounded-xl px-2 py-3 text-left transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       onClick={() => setReceipt(transaction)}
-                      aria-label={`Afficher le reçu : ${transaction.title}`}
+                      aria-label={`View receipt: ${transaction.title}`}
                     >
                       <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-muted">
                         {transaction.direction === "in"
@@ -446,7 +446,7 @@ export function TransferWorkspace() {
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-sm font-medium">{transaction.title}</span>
                         <span className="block truncate text-xs text-muted-foreground">
-                          {transaction.memo || transaction.category} · {new Date(transaction.date).toLocaleDateString()}
+                          {transaction.memo || transaction.category} · {new Date(transaction.date).toLocaleDateString("en-US")}
                         </span>
                       </span>
                       <span className={`shrink-0 text-sm font-semibold ${transaction.direction === "in" ? "text-emerald-600" : ""}`}>
@@ -459,13 +459,13 @@ export function TransferWorkspace() {
               </ul>
             ) : (
               <p className="py-8 text-center text-sm text-muted-foreground">
-                {search ? "Aucune transaction trouvée." : "Aucune transaction pour le moment."}
+                {search ? "No transactions found." : "No transactions yet."}
               </p>
             )}
             <div className="mt-3 flex items-center justify-between border-t border-border pt-3">
               <p className="text-xs text-muted-foreground">
                 {filteredTransactions.length === 0
-                  ? "0 résultat"
+                  ? "0 results"
                   : `${historyPage * pageSize + 1}–${Math.min((historyPage + 1) * pageSize, filteredTransactions.length)} sur ${filteredTransactions.length}`}
               </p>
               <div className="flex gap-1">
@@ -475,7 +475,7 @@ export function TransferWorkspace() {
                   variant="ghost"
                   disabled={historyPage === 0}
                   onClick={() => setHistoryPage((page) => Math.max(0, page - 1))}
-                  aria-label="Page précédente"
+                  aria-label="Previous page"
                 >
                   <ChevronLeft aria-hidden="true" />
                 </Button>
@@ -485,7 +485,7 @@ export function TransferWorkspace() {
                   variant="ghost"
                   disabled={historyPage >= pageCount - 1}
                   onClick={() => setHistoryPage((page) => Math.min(pageCount - 1, page + 1))}
-                  aria-label="Page suivante"
+                  aria-label="Next page"
                 >
                   <ChevronRight aria-hidden="true" />
                 </Button>
@@ -500,7 +500,7 @@ export function TransferWorkspace() {
               <span className="flex size-9 items-center justify-center rounded-xl bg-gold/10">
                 <UserRound className="size-4 text-gold" aria-hidden="true" />
               </span>
-              Bénéficiaires
+              Payees
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -515,7 +515,7 @@ export function TransferWorkspace() {
                 </li>
               ))}
               {isAddingPayee && (
-                <li className="flex items-center gap-3 py-3" aria-label="Bénéficiaire en cours d’ajout">
+                <li className="flex items-center gap-3 py-3" aria-label="Adding payee">
                   <div className="min-w-0 flex-1 space-y-2">
                     <Skeleton className="h-3 w-2/5" />
                     <Skeleton className="h-2.5 w-3/5" />
@@ -524,41 +524,41 @@ export function TransferWorkspace() {
                 </li>
               )}
               {payees.length === 0 && (
-                <li className="py-3 text-sm text-muted-foreground">Aucun bénéficiaire enregistré.</li>
+                <li className="py-3 text-sm text-muted-foreground">No saved payees.</li>
               )}
             </ul>
             <form className="space-y-3 rounded-xl border border-border/70 bg-muted/20 p-3.5" onSubmit={submitPayee} noValidate>
               <p className="flex items-center gap-2 text-sm font-medium">
                 <Plus className="size-4 text-gold" aria-hidden="true" />
-                Ajouter un bénéficiaire
+                Add a payee
               </p>
               <label className="block space-y-1.5 text-sm">
                 <span className="text-xs text-muted-foreground">Nom</span>
                 <Input
                   autoComplete="name"
                   maxLength={100}
-                  placeholder="Nom du bénéficiaire"
+                  placeholder="Payee name"
                   value={payeeName}
                   onChange={(event) => setPayeeName(event.target.value)}
                 />
               </label>
               <label className="block space-y-1.5 text-sm">
-                <span className="text-xs text-muted-foreground">Numéro de compte</span>
+                <span className="text-xs text-muted-foreground">Account number</span>
                 <Input
                   autoComplete="off"
                   maxLength={34}
-                  placeholder="IBAN ou numéro de compte"
+                  placeholder="IBAN or account number"
                   value={payeeAccount}
                   onChange={(event) => setPayeeAccount(event.target.value)}
                 />
               </label>
               <label className="block space-y-1.5 text-sm">
-                <span className="text-xs text-muted-foreground">Devise de réception</span>
+                <span className="text-xs text-muted-foreground">Receiving currency</span>
                 <select
                   className="h-9 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
                   value={payeeCurrency}
                   onChange={(event) => setPayeeCurrency(event.target.value as Currency)}
-                  aria-label="Devise de réception du bénéficiaire"
+                  aria-label="Payee receiving currency"
                 >
                   {currencyOptions()}
                 </select>
@@ -566,7 +566,7 @@ export function TransferWorkspace() {
               {payeeError && <p className="text-sm text-destructive" role="alert">{payeeError}</p>}
               <Button className="w-full gap-2" type="submit" variant="outline" disabled={isAddingPayee}>
                 {isAddingPayee ? <Clock3 className="size-4 animate-pulse" aria-hidden="true" /> : <Check className="size-4" aria-hidden="true" />}
-                {isAddingPayee ? "Ajout en cours…" : "Enregistrer"}
+                {isAddingPayee ? "Adding…" : "Save payee"}
               </Button>
             </form>
           </CardContent>
@@ -580,7 +580,7 @@ export function TransferWorkspace() {
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="size-4 text-gold print:hidden" aria-hidden="true" />
-                  Reçu de transfert
+                  Transfer receipt
                 </CardTitle>
                 <p className="mt-1 text-xs text-muted-foreground">Horizon Finance</p>
               </div>
@@ -590,39 +590,39 @@ export function TransferWorkspace() {
                 type="button"
                 variant="ghost"
                 onClick={() => setReceipt(null)}
-                aria-label="Fermer le reçu"
+                aria-label="Close receipt"
               >
                 <X aria-hidden="true" />
               </Button>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="border-y border-dashed border-border py-4 text-center">
-                <p className="text-xs text-muted-foreground">Montant transféré</p>
+                <p className="text-xs text-muted-foreground">Transfer amount</p>
                 <p className="mt-1 text-2xl font-semibold">
                   {formatAmount(receipt.amount, receipt.currency)}
                 </p>
               </div>
               <dl className="space-y-3 text-sm">
                 <div className="flex justify-between gap-4">
-                  <dt className="text-muted-foreground">Bénéficiaire</dt>
-                  <dd className="text-right font-medium">{receipt.title.replace("Transfert vers ", "")}</dd>
+                  <dt className="text-muted-foreground">Payee</dt>
+                  <dd className="text-right font-medium">{receipt.title.replace("Transfer to ", "")}</dd>
                 </div>
                 <div className="flex justify-between gap-4">
-                  <dt className="text-muted-foreground">Motif</dt>
+                  <dt className="text-muted-foreground">Reference</dt>
                   <dd className="text-right">{receipt.memo}</dd>
                 </div>
                 <div className="flex justify-between gap-4">
                   <dt className="text-muted-foreground">Date</dt>
-                  <dd className="text-right">{new Date(receipt.date).toLocaleString()}</dd>
+                  <dd className="text-right">{new Date(receipt.date).toLocaleString("en-US")}</dd>
                 </div>
                 <div className="flex justify-between gap-4">
-                  <dt className="text-muted-foreground">Référence</dt>
+                  <dt className="text-muted-foreground">Transaction ID</dt>
                   <dd className="max-w-40 truncate text-right font-mono text-xs">{receipt.id}</dd>
                 </div>
               </dl>
               <Button className="w-full gap-2 print:hidden" type="button" onClick={() => window.print()}>
                 <Printer className="size-4" aria-hidden="true" />
-                Imprimer le reçu
+                Print receipt
               </Button>
             </CardContent>
           </Card>
