@@ -1,12 +1,11 @@
 import { TopBar } from "@/components/shell/top-bar";
+import { TransferWorkspace } from "@/components/transfers/transfer-workspace";
 
 export default function TransfersPage() {
   return (
     <>
-      <TopBar title="Send" />
-      <main className="flex-1 px-5 py-5">
-        <p className="text-muted-foreground">Transfers — Dev 2</p>
-      </main>
+      <TopBar title="Transfers" />
+      <TransferWorkspace />
     </>
   );
 }
