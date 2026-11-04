@@ -5,6 +5,7 @@ import { CalendarDays, CheckCircle2, ChevronLeft, ChevronRight, ClipboardCheck, 
 import type { AuditEvent } from "@/types";
 import { getSecurityAuditChangeEvent, readSecurityAudit } from "@/components/security/security-audit";
 import { Button } from "@/components/ui/button";
+import { SectionHeader } from "@/components/ui/section-header";
 import {
   Dialog,
   DialogContent,
@@ -87,11 +88,8 @@ export function SecurityAuditLog() {
   const visibleEvents = events.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE);
 
   return (
-    <section className="border-t border-border pt-5" aria-labelledby="security-audit-title">
-      <div className="mb-4 flex items-center gap-2">
-        <ClipboardCheck className="size-4 text-gold" aria-hidden="true" />
-        <h2 id="security-audit-title" className="text-base font-semibold">Recent security activity</h2>
-      </div>
+        <section className="border-t border-border pt-5" aria-label="Recent security activity">
+        <SectionHeader icon={ClipboardCheck} title="Recent security activity" />
       {events.length === 0 ? (
         <p className="text-sm text-muted-foreground">No security activity recorded.</p>
       ) : (
