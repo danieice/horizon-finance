@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { Globe, ShieldCheck, Zap } from "lucide-react";
 import { PhoneFrame } from "@/components/shell/phone-frame";
@@ -37,14 +38,8 @@ export function WelcomeScreen() {
         />
 
         {/* brand — swap for real logo tomorrow */}
-        <div className="relative flex items-center gap-2 animate-[fadeUp_600ms_ease-out]">
-          <span
-            className="grid size-7 place-items-center rounded-md text-sm font-bold text-black"
-            style={{ background: "linear-gradient(135deg, #f0d98a, #c9a227)" }}
-          >
-            H
-          </span>
-          <span className="text-sm font-medium tracking-wide text-white/80">Horizon</span>
+                <div className="relative animate-[fadeUp_600ms_ease-out]">
+          <Image src="/logo.png" alt="Horizon Finance" width={140} height={140} priority className="h-auto w-28" />
         </div>
 
         {/* hero */}
