@@ -77,3 +77,4 @@ export function PrivacyToggle({ variant = "icon", className }: PrivacyToggleProp
     </Button>
   );
 }
+

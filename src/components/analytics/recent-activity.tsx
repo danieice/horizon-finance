@@ -284,3 +284,4 @@ export function RecentActivity() {
     </section>
   );
 }
+
