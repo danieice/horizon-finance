@@ -6,6 +6,7 @@ import {
   ArrowLeftRight,
   ArrowRight,
   Check,
+  Clock,
   ChevronLeft,
   ChevronRight,
   Clock3,
@@ -14,13 +15,14 @@ import {
   Printer,
   Search,
   Send,
-  UserRound,
+  Users,
   X,
 } from "lucide-react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { SectionHeader } from "@/components/ui/section-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useStore } from "@/store/useStore";
 import type { Currency, Payee, Transaction } from "@/types";
@@ -245,12 +247,7 @@ export function TransferWorkspace() {
 
         <Card className="gap-0 rounded-2xl shadow-sm ring-1 ring-border/80 transition-shadow hover:shadow-md">
           <CardHeader className="gap-1 pb-3">
-            <CardTitle className="flex items-center gap-3">
-              <span className="flex size-9 items-center justify-center rounded-xl bg-gold/10">
-                <Send className="size-4 text-gold" aria-hidden="true" />
-              </span>
-              <span>New transfer</span>
-            </CardTitle>
+            <SectionHeader icon={Send} title="New transfer" />
           </CardHeader>
           <CardContent>
             <form className="space-y-4 border-t border-border/70 pt-4" onSubmit={submitTransfer} noValidate>
@@ -279,7 +276,7 @@ export function TransferWorkspace() {
                     min="0"
                     step="any"
                     inputMode="decimal"
-                    placeholder="0,00"
+                    placeholder="0.00"
                     value={amount}
                     onChange={(event) => setAmount(event.target.value)}
                     aria-label="Amount to send"
@@ -311,7 +308,7 @@ export function TransferWorkspace() {
                 <span className="font-medium">Reference <span className="font-normal text-muted-foreground">(optional)</span></span>
                 <Input
                   maxLength={120}
-                  placeholder="Ex. Part du loyer"
+                  placeholder="e.g. Rent split"
                   value={memo}
                   onChange={(event) => setMemo(event.target.value)}
                 />
@@ -334,18 +331,13 @@ export function TransferWorkspace() {
         </Card>
 
         <Card size="sm" className="gap-0 rounded-2xl shadow-sm ring-1 ring-border/80 transition-shadow hover:shadow-md">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-3">
-              <span className="flex size-9 items-center justify-center rounded-xl bg-gold/10">
-                <ArrowLeftRight className="size-4 text-gold" aria-hidden="true" />
-              </span>
-              Currency converter
-            </CardTitle>
+          <CardHeader className="pb-0">
+            <SectionHeader icon={ArrowLeftRight} title="Currency converter" />
           </CardHeader>
-          <CardContent className="space-y-3 border-t border-border/70 pt-4">
+          <CardContent className="space-y-3 pt-0">
             <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-2">
               <label className="space-y-1.5 text-sm">
-                <span className="text-xs text-muted-foreground">Montant</span>
+                <span className="text-xs text-muted-foreground">Amount</span>
                 <Input
                   type="number"
                   min="0"
@@ -400,12 +392,7 @@ export function TransferWorkspace() {
 
         <Card className="gap-0 rounded-2xl shadow-sm ring-1 ring-border/80 transition-shadow hover:shadow-md">
           <CardHeader className="gap-3 pb-3">
-            <CardTitle className="flex items-center gap-3">
-              <span className="flex size-9 items-center justify-center rounded-xl bg-gold/10">
-                <Clock3 className="size-4 text-gold" aria-hidden="true" />
-              </span>
-              <span>Historique</span>
-            </CardTitle>
+            <SectionHeader icon={Clock} title="Recent activity" />
             <div className="relative">
               <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
               <Input
@@ -466,7 +453,7 @@ export function TransferWorkspace() {
               <p className="text-xs text-muted-foreground">
                 {filteredTransactions.length === 0
                   ? "0 results"
-                  : `${historyPage * pageSize + 1}–${Math.min((historyPage + 1) * pageSize, filteredTransactions.length)} sur ${filteredTransactions.length}`}
+                  : `${historyPage * pageSize + 1}–${Math.min((historyPage + 1) * pageSize, filteredTransactions.length)} of ${filteredTransactions.length}`}
               </p>
               <div className="flex gap-1">
                 <Button
@@ -496,12 +483,7 @@ export function TransferWorkspace() {
 
         <Card className="gap-0 rounded-2xl shadow-sm ring-1 ring-border/80 transition-shadow hover:shadow-md">
           <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-3">
-              <span className="flex size-9 items-center justify-center rounded-xl bg-gold/10">
-                <UserRound className="size-4 text-gold" aria-hidden="true" />
-              </span>
-              Payees
-            </CardTitle>
+            <SectionHeader icon={Users} title="Payees" />
           </CardHeader>
           <CardContent className="space-y-4">
             <ul className="divide-y divide-border/70 border-t border-border/70">
@@ -533,7 +515,7 @@ export function TransferWorkspace() {
                 Add a payee
               </p>
               <label className="block space-y-1.5 text-sm">
-                <span className="text-xs text-muted-foreground">Nom</span>
+                <span className="text-xs text-muted-foreground">Name</span>
                 <Input
                   autoComplete="name"
                   maxLength={100}
