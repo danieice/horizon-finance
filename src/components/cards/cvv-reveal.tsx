@@ -1,36 +1,35 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useEffect, useRef } from "react";
 
-export function CvvReveal({ cvv }: { cvv: string }) {
-  const [shown, setShown] = useState(false);
+type Props = {
+  cvv: string;
+  shown: boolean;
+  onHide: () => void;
+};
+
+export function CvvReveal({ cvv, shown, onHide }: Props) {
   const timer = useRef<number | null>(null);
 
-  function reveal() {
-    setShown(true);
-    if (timer.current) window.clearTimeout(timer.current);
-    // auto-hide after 5s so the CVV isn't left on screen
-    timer.current = window.setTimeout(() => setShown(false), 5000);
-  }
-
   useEffect(() => {
+    if (!shown) return;
+    // auto-hide after 5s so the CVV isn't left on screen
+    timer.current = window.setTimeout(onHide, 5000);
     return () => {
       if (timer.current) window.clearTimeout(timer.current);
     };
-  }, []);
+  }, [shown, onHide]);
+
+  if (!shown) return null;
 
   return (
-    <div className="flex items-center justify-between rounded-xl border border-border bg-card p-4">
+    <div className="flex items-center justify-between rounded-2xl border border-gold/30 bg-gold/5 p-4">
       <div>
-        <p className="text-xs text-muted-foreground">CVV</p>
-        <p className="font-mono text-lg tracking-[0.3em]" aria-live="polite">
-          {shown ? cvv : "•••"}
+        <p className="text-xs text-muted-foreground">CVV · hides in 5s</p>
+        <p className="font-mono text-xl tracking-[0.4em]" aria-live="polite">
+          {cvv}
         </p>
       </div>
-      <Button variant="outline" size="sm" onClick={reveal} disabled={shown}>
-        {shown ? "Hiding soon" : "Show CVV"}
-      </Button>
     </div>
   );
 }

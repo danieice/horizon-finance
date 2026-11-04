@@ -1,40 +1,37 @@
 "use client";
 
-import { toast } from "sonner";
-import { Slider } from "@/components/ui/slider";
-import { Switch } from "@/components/ui/switch";
 import { formatAmount } from "@/lib/currency";
+import { Slider } from "@/components/ui/slider";
 import { useStore } from "@/store/useStore";
 import type { Card } from "@/types";
 
 export function CardControls({ card }: { card: Card }) {
-  const setCardStatus = useStore((s) => s.setCardStatus);
   const setCardLimit = useStore((s) => s.setCardLimit);
-
-  function toggleFreeze(frozen: boolean) {
-    setCardStatus(card.id, frozen ? "frozen" : "active");
-    toast.success(frozen ? "Card frozen" : "Card unfrozen");
-  }
+  const pct = Math.min(100, Math.round((card.spent / card.limit) * 100));
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between rounded-xl border border-border bg-card p-4">
+    <div className="rounded-2xl border border-border bg-card p-4">
+      <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm font-medium">Freeze card</p>
-          <p className="text-xs text-muted-foreground">Instantly block all spending</p>
+          <p className="text-sm font-medium">Monthly limit</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {formatAmount(card.spent, "USD")} of{" "}
+            {formatAmount(card.limit, "USD")} used
+          </p>
         </div>
-        <Switch
-          checked={card.status === "frozen"}
-          onCheckedChange={toggleFreeze}
-          aria-label="Freeze card"
+        <p className="font-mono text-sm text-gold">
+          {formatAmount(card.limit, "USD")}
+        </p>
+      </div>
+
+      <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-secondary">
+        <div
+          className="h-full rounded-full bg-gold transition-[width] duration-500"
+          style={{ width: `${pct}%` }}
         />
       </div>
 
-      <div className="rounded-xl border border-border bg-card p-4">
-        <div className="mb-3 flex items-center justify-between">
-          <p className="text-sm font-medium">Monthly limit</p>
-          <p className="font-mono text-sm text-gold">{formatAmount(card.limit, "USD")}</p>
-        </div>
+      <div className="mt-4">
         <Slider
           value={[card.limit]}
           min={500}
@@ -42,10 +39,8 @@ export function CardControls({ card }: { card: Card }) {
           step={100}
           onValueChange={([v]) => setCardLimit(card.id, v)}
           aria-label="Monthly spending limit"
+          className="[&_[data-slot=slider-range]]:bg-muted-foreground/40"
         />
-        <p className="mt-2 text-xs text-muted-foreground">
-          {formatAmount(card.spent, "USD")} spent this month
-        </p>
       </div>
     </div>
   );

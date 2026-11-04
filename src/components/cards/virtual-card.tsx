@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, EyeOff, Snowflake } from "lucide-react";
+import { Wifi } from "lucide-react";
 import type { Card } from "@/types";
 
 type Props = {
@@ -9,62 +9,95 @@ type Props = {
 };
 
 export function VirtualCard({ card, revealed }: Props) {
-  const number = revealed ? card.pan : `•••• •••• •••• ${card.last4}`;
+  const groups = card.pan.split(" ");
   const frozen = card.status === "frozen";
 
   return (
     <div
-      className="relative aspect-[1.586/1] w-full overflow-hidden rounded-2xl p-5 text-white shadow-xl"
+      className="group relative aspect-[1.586/1] w-full overflow-hidden rounded-[20px] text-white shadow-2xl transition-all duration-500"
       style={{
-        background:
-          "linear-gradient(135deg, #2a2a2e 0%, #121214 45%, #1c1c20 70%, #0a0a0b 100%)",
+        background: frozen
+          ? "linear-gradient(135deg, #3a4452 0%, #1a2028 55%, #0d1116 100%)"
+          : "linear-gradient(135deg, #3a3a40 0%, #18181b 40%, #232327 65%, #0a0a0b 100%)",
       }}
     >
-      {/* brushed sheen */}
+      {/* diagonal brushed-metal streaks */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-30"
+        className="pointer-events-none absolute inset-0 opacity-[0.35]"
         style={{
           background:
-            "repeating-linear-gradient(115deg, transparent 0 2px, rgba(255,255,255,0.04) 2px 3px)",
+            "repeating-linear-gradient(110deg, transparent 0 3px, rgba(255,255,255,0.05) 3px 4px)",
         }}
       />
-
-      <div className="relative flex h-full flex-col justify-between">
-        <div className="flex items-start justify-between">
-          <span className="text-sm font-medium tracking-wide">Horizon</span>
-          {frozen ? (
-            <span className="flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-[11px]">
-              <Snowflake className="size-3" aria-hidden />
-              Frozen
-            </span>
-          ) : null}
-        </div>
-
-        {/* gold EMV chip */}
+      {/* soft top-left light bloom */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -left-10 -top-16 h-40 w-40 rounded-full opacity-40 blur-3xl"
+        style={{ background: "radial-gradient(circle, rgba(201,162,39,0.35), transparent 70%)" }}
+      />
+      {/* frozen frost overlay */}
+      {frozen ? (
         <div
           aria-hidden
-          className="h-8 w-11 rounded-md"
-          style={{ background: "linear-gradient(135deg, #e5c76b, #b8901f)" }}
+          className="pointer-events-none absolute inset-0 backdrop-blur-[1px]"
+          style={{ background: "linear-gradient(135deg, rgba(180,210,255,0.12), transparent)" }}
         />
+      ) : null}
 
-        <div className="space-y-3">
-          <p className="font-mono text-lg tracking-[0.15em]">{number}</p>
-          <div className="flex items-end justify-between text-xs">
-            <div>
-              <p className="text-white/50">CARD HOLDER</p>
-              <p className="tracking-wide">{card.holder}</p>
+      <div className="relative flex h-full flex-col justify-between p-5">
+        {/* top row: brand + contactless */}
+        <div className="flex items-start justify-between">
+          <div className="flex items-baseline gap-1">
+            <span className="text-base font-bold tracking-tight">Horizon</span>
+            <span className="text-[10px] font-medium text-white/40">{card.label}</span>
+          </div>
+          <Wifi className="size-4 rotate-90 text-white/60" aria-hidden />
+        </div>
+
+        {/* realistic EMV chip */}
+        <div className="relative">
+          <div
+            className="relative h-9 w-12 overflow-hidden rounded-[7px]"
+            style={{ background: "linear-gradient(135deg, #f0d98a 0%, #c9a227 50%, #9a7b1a 100%)" }}
+            aria-hidden
+          >
+            <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 gap-[1.5px] p-[3px] opacity-40">
+              {Array.from({ length: 9 }).map((_, i) => (
+                <div key={i} className="rounded-[1px] bg-black/30" />
+              ))}
             </div>
-            <div className="text-right">
-              <p className="text-white/50">EXPIRES</p>
-              <p className="tracking-wide">{card.expiry}</p>
-            </div>
+            <div className="absolute left-0 right-0 top-1/2 h-px -translate-y-1/2 bg-black/25" />
+            <div className="absolute bottom-0 top-0 left-1/2 w-px -translate-x-1/2 bg-black/25" />
+          </div>
+        </div>
+
+        {/* number */}
+        <div className="flex items-center gap-3 font-mono text-[17px] tracking-[0.12em]">
+          {groups.map((g, i) => (
+            <span key={i} className="tabular-nums">
+              {revealed || i === groups.length - 1 ? g : "••••"}
+            </span>
+          ))}
+        </div>
+
+        {/* bottom row */}
+        <div className="flex items-end justify-between">
+          <div className="space-y-0.5">
+            <p className="text-[9px] uppercase tracking-wider text-white/40">Card holder</p>
+            <p className="text-sm tracking-wide">{card.holder}</p>
+          </div>
+          <div className="space-y-0.5 text-right">
+            <p className="text-[9px] uppercase tracking-wider text-white/40">Expires</p>
+            <p className="text-sm tracking-wide">{card.expiry}</p>
+          </div>
+          {/* Mastercard-style mark */}
+          <div className="flex items-center" aria-hidden>
+            <span className="size-6 rounded-full bg-[#eb001b]/90" />
+            <span className="-ml-3 size-6 rounded-full bg-[#f79e1b]/90 mix-blend-screen" />
           </div>
         </div>
       </div>
     </div>
   );
 }
-
-// re-export so the page can show a reveal toggle label without importing icons twice
-export { Eye, EyeOff };
