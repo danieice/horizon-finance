@@ -25,6 +25,8 @@ import {
   ShieldCheck,
   Tag,
   FileText,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -39,13 +41,30 @@ const CATEGORY_ICONS: Record<TxCategory, React.ComponentType<{ className?: strin
 
 type FilterDirection = "all" | "out" | "in";
 
-export function RecentActivity() {
+interface RecentActivityProps {
+  onSelectTransaction?: (id: string) => void;
+}
+
+const ITEMS_PER_PAGE = 4;
+
+export function RecentActivity({ onSelectTransaction }: RecentActivityProps) {
   const transactions = useStore((s) => s.transactions);
   const privacyMode = useStore((s) => s.privacyMode);
 
   const [filter, setFilter] = useState<FilterDirection>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
+
+  const handleFilterChange = (f: FilterDirection) => {
+    setFilter(f);
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    setCurrentPage(1);
+  };
 
   const filteredTransactions = useMemo(() => {
     const cleanSearch = sanitizeText(searchQuery).toLowerCase();
@@ -66,6 +85,12 @@ export function RecentActivity() {
     });
   }, [transactions, filter, searchQuery]);
 
+  const totalPages = Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE) || 1;
+  const paginatedTransactions = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredTransactions.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredTransactions, currentPage]);
+
   const formatDate = (dateStr: string) => {
     try {
       const d = new Date(dateStr);
@@ -77,6 +102,14 @@ export function RecentActivity() {
       return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
     } catch {
       return dateStr;
+    }
+  };
+
+  const handleRowClick = (tx: Transaction) => {
+    if (onSelectTransaction) {
+      onSelectTransaction(tx.id);
+    } else {
+      setSelectedTx(tx);
     }
   };
 
@@ -99,7 +132,7 @@ export function RecentActivity() {
             <button
               key={f}
               type="button"
-              onClick={() => setFilter(f)}
+              onClick={() => handleFilterChange(f)}
               className={cn(
                 "rounded-md px-2 py-0.5 text-[11px] font-medium transition-colors capitalize",
                 filter === f
@@ -119,7 +152,7 @@ export function RecentActivity() {
         <input
           type="text"
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => handleSearchChange(e.target.value)}
           placeholder="Filter by description or memo..."
           className="h-8 w-full rounded-lg border border-input bg-background/50 pl-8 pr-3 text-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
@@ -127,7 +160,7 @@ export function RecentActivity() {
 
       {/* Transaction List */}
       <div className="flex flex-col divide-y divide-border/50">
-        {filteredTransactions.map((tx) => {
+        {paginatedTransactions.map((tx) => {
           const Icon = CATEGORY_ICONS[tx.category] || FileText;
           const isIncome = tx.direction === "in";
           const safeTitle = sanitizeText(tx.title);
@@ -137,23 +170,23 @@ export function RecentActivity() {
             <button
               key={tx.id}
               type="button"
-              onClick={() => setSelectedTx(tx)}
-              className="flex w-full items-center justify-between py-2.5 text-left transition-colors hover:bg-muted/30 rounded-lg px-1.5 -mx-1.5"
+              onClick={() => handleRowClick(tx)}
+              className="flex w-full items-center justify-between py-2.5 text-left transition-colors hover:bg-muted/30 rounded-lg px-1.5 -mx-1.5 group"
             >
               <div className="flex items-center gap-3 min-w-0">
                 <div
                   className={cn(
-                    "flex size-9 shrink-0 items-center justify-center rounded-xl border",
+                    "flex size-9 shrink-0 items-center justify-center rounded-xl border transition-colors",
                     isIncome
                       ? "border-gold/30 bg-gold/10 text-gold"
-                      : "border-border bg-muted/60 text-foreground"
+                      : "border-border bg-muted/60 text-foreground group-hover:border-gold/30"
                   )}
                 >
                   <Icon className="size-4" />
                 </div>
 
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold text-foreground truncate">
+                  <p className="text-xs font-semibold text-foreground truncate group-hover:text-gold transition-colors">
                     {safeTitle}
                   </p>
                   <p className="text-[11px] text-muted-foreground truncate">
@@ -188,7 +221,56 @@ export function RecentActivity() {
         )}
       </div>
 
-      {/* Detailed Transaction Dialog */}
+      {/* Pagination Controls */}
+      {filteredTransactions.length > 0 && (
+        <div className="flex items-center justify-between pt-2 border-t border-border/50 text-xs">
+          <span className="text-[11px] text-muted-foreground">
+            Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–
+            {Math.min(currentPage * ITEMS_PER_PAGE, filteredTransactions.length)} of{" "}
+            {filteredTransactions.length}
+          </span>
+
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              aria-label="Previous page"
+              className="flex size-7 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground disabled:pointer-events-none disabled:opacity-30"
+            >
+              <ChevronLeft className="size-3.5" />
+            </button>
+
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setCurrentPage(p)}
+                className={cn(
+                  "flex size-7 items-center justify-center rounded-lg text-[11px] font-medium transition-colors border",
+                  currentPage === p
+                    ? "border-gold/30 bg-gold/10 text-gold font-bold"
+                    : "border-border bg-background text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                )}
+              >
+                {p}
+              </button>
+            ))}
+
+            <button
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              aria-label="Next page"
+              className="flex size-7 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground disabled:pointer-events-none disabled:opacity-30"
+            >
+              <ChevronRight className="size-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Fallback Detailed Transaction Dialog */}
       <Dialog open={!!selectedTx} onOpenChange={(open) => !open && setSelectedTx(null)}>
         {selectedTx && (
           <DialogContent className="max-w-[360px] rounded-2xl bg-card border-border p-5">
@@ -215,7 +297,6 @@ export function RecentActivity() {
               </DialogDescription>
             </DialogHeader>
 
-            {/* Amount Badge */}
             <div className="my-2 rounded-xl bg-muted/40 p-3 text-center border border-border/50">
               <span className="text-[11px] text-muted-foreground uppercase font-medium">
                 Settled Amount
@@ -232,7 +313,6 @@ export function RecentActivity() {
               </p>
             </div>
 
-            {/* Transaction Metadata Grid */}
             <div className="flex flex-col gap-2 divide-y divide-border/40 text-xs">
               <div className="flex items-center justify-between py-1.5">
                 <span className="text-muted-foreground flex items-center gap-1.5">
@@ -284,4 +364,3 @@ export function RecentActivity() {
     </section>
   );
 }
-

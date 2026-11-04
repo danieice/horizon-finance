@@ -6,4 +6,4 @@ export { CategoryBreakdown } from "./category-breakdown";
 export { QuickStats } from "./quick-stats";
 export { RecentActivity } from "./recent-activity";
 export { AnalyticsSkeleton } from "./analytics-skeleton";
-
+export { TransactionDetails } from "./transaction-details";
