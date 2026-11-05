@@ -194,7 +194,13 @@ export function TransactionDetails({ tx, onBack }: TransactionDetailsProps) {
             <span className="text-muted-foreground flex items-center gap-1.5">
               <CreditCard className="size-3.5" /> Payment Method
             </span>
-            <span className="font-medium text-foreground">Horizon Metal Card</span>
+            <span className="font-medium text-foreground">
+              {tx.category === "Transfer"
+                ? "Bank transfer"
+                : isIncome
+                  ? "Bank deposit"
+                  : "Horizon Metal Card"}
+            </span>
           </div>
 
           <div className="flex items-center justify-between py-2">
@@ -202,13 +208,19 @@ export function TransactionDetails({ tx, onBack }: TransactionDetailsProps) {
               <Clock className="size-3.5" /> Transaction Type
             </span>
             <span className="font-medium text-foreground">
-              {isIncome ? "Inward Deposit" : "Direct Card Outflow"}
+              {isIncome
+                ? "Inward Deposit"
+                : tx.category === "Transfer"
+                  ? "Outgoing Transfer"
+                  : "Direct Card Outflow"}
             </span>
           </div>
 
           <div className="flex items-center justify-between py-2">
             <span className="text-muted-foreground">Network Fee</span>
-            <span className="font-medium text-gold">Zero Fee ($0.00)</span>
+            <span className="font-medium text-gold">
+              Zero Fee ({formatAmount(0, tx.currency)})
+            </span>
           </div>
         </div>
       </div>
@@ -293,4 +305,3 @@ export function TransactionDetails({ tx, onBack }: TransactionDetailsProps) {
     </div>
   );
 }
-

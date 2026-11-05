@@ -1,27 +1,18 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import {
-  ArrowDownLeft,
   ArrowLeftRight,
-  ArrowRight,
   Check,
   ChevronDown,
-  Clock,
-  ChevronLeft,
-  ChevronRight,
   Clock3,
-  FileText,
   Plus,
-  Printer,
-  Search,
   Send,
   Users,
-  X,
 } from "lucide-react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { SectionHeader } from "@/components/ui/section-header";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -31,79 +22,7 @@ import { CURRENCIES, formatAmount, rateToUSD } from "@/lib/currency";
 import { mockRequest } from "@/lib/mock";
 import { sanitizeText } from "@/lib/sanitize";
 import { toast } from "sonner";
-
-const pageSize = 5;
-
-function escapeHtml(value: string): string {
-  return value.replace(/[&<>"']/g, (character) => {
-    const entities: Record<string, string> = {
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#39;",
-    };
-    return entities[character];
-  });
-}
-
-function printReceipt(transaction: Transaction): boolean {
-  const printWindow = window.open("", "_blank", "popup,width=420,height=600");
-  if (!printWindow) return false;
-
-  const isTransfer = transaction.title.startsWith("Transfer to ");
-  const title = escapeHtml(isTransfer ? "Payee" : "Transaction");
-  const value = escapeHtml(
-    isTransfer ? transaction.title.replace("Transfer to ", "") : transaction.title
-  );
-  const reference = escapeHtml(transaction.memo);
-  const date = escapeHtml(new Date(transaction.date).toLocaleString("en-US"));
-  const amount = escapeHtml(formatAmount(transaction.amount, transaction.currency));
-
-  printWindow.document.write(`<!doctype html>
-    <html lang="en">
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Horizon Finance receipt</title>
-        <style>
-          @page { size: 80mm 70mm; margin: 0; }
-          * { box-sizing: border-box; }
-          html, body { width: 80mm; height: 70mm; margin: 0; background: #fff; color: #111; }
-          body { padding: 5mm; font: 12px Arial, sans-serif; }
-          main { width: 70mm; }
-          header { padding-bottom: 3mm; border-bottom: 1px dashed #999; }
-          h1 { margin: 0; font-size: 15px; font-weight: 600; }
-          header p { margin: 1mm 0 0; color: #555; font-size: 10px; }
-          .amount { padding: 4mm 0; text-align: center; border-bottom: 1px dashed #999; }
-          .amount p { margin: 0; color: #555; font-size: 10px; }
-          .amount strong { display: block; margin-top: 1mm; font-size: 20px; }
-          dl { margin: 3mm 0 0; }
-          dl div { display: flex; justify-content: space-between; gap: 4mm; margin-top: 2mm; }
-          dt { color: #555; }
-          dd { max-width: 46mm; margin: 0; text-align: right; overflow-wrap: anywhere; }
-        </style>
-      </head>
-      <body>
-        <main>
-          <header><h1>Transfer receipt</h1><p>Horizon Finance</p></header>
-          <section class="amount"><p>Transfer amount</p><strong>${amount}</strong></section>
-          <dl>
-            <div><dt>${title}</dt><dd>${value}</dd></div>
-            <div><dt>Reference</dt><dd>${reference}</dd></div>
-            <div><dt>Date</dt><dd>${date}</dd></div>
-          </dl>
-        </main>
-      </body>
-    </html>`);
-  printWindow.document.close();
-  printWindow.addEventListener("afterprint", () => printWindow.close(), { once: true });
-  printWindow.setTimeout(() => {
-    printWindow.focus();
-    printWindow.print();
-  }, 100);
-  return true;
-}
+import { RecentActivity, TransactionDetails } from "@/components/analytics";
 
 const transferSchema = (availableUsd: number) =>
   z
@@ -228,9 +147,7 @@ export function TransferWorkspace() {
   const [converterFrom, setConverterFrom] = useState<Currency>("USD");
   const [converterTo, setConverterTo] = useState<Currency>("EUR");
 
-  const [search, setSearch] = useState("");
-  const [historyPage, setHistoryPage] = useState(0);
-  const [receipt, setReceipt] = useState<Transaction | null>(null);
+  const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
 
   const [payeeName, setPayeeName] = useState("");
   const [payeeAccount, setPayeeAccount] = useState("");
@@ -247,21 +164,8 @@ export function TransferWorkspace() {
     ? amountInUsd * rateToUSD[selectedPayee.currency]
     : 0;
 
-  const filteredTransactions = useMemo(() => {
-    const query = search.trim().toLocaleLowerCase();
-    return [...transactions]
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .filter((transaction) =>
-        !query ||
-        [transaction.title, transaction.memo, transaction.currency, transaction.category]
-          .some((value) => value.toLocaleLowerCase().includes(query))
-      );
-  }, [search, transactions]);
-
-  const pageCount = Math.max(1, Math.ceil(filteredTransactions.length / pageSize));
-  const visibleTransactions = filteredTransactions.slice(
-    historyPage * pageSize,
-    (historyPage + 1) * pageSize
+  const selectedTransaction = transactions.find(
+    (transaction) => transaction.id === selectedTransactionId
   );
   const converterValue = Number(converterAmount);
   const convertedValue = Number.isFinite(converterValue) && converterValue > 0
@@ -306,7 +210,7 @@ export function TransferWorkspace() {
       const completedTransfer = await mockRequest(transaction);
       addTransaction(completedTransfer);
       setAvailableUsd((current) => current - completedTransfer.amount / rateToUSD[completedTransfer.currency]);
-      setReceipt(completedTransfer);
+      setSelectedTransactionId(completedTransfer.id);
       setAmount("");
       setMemo("");
       toast.success("Transfer sent.");
@@ -352,11 +256,6 @@ export function TransferWorkspace() {
     }
   }
 
-  function changeSearch(value: string) {
-    setSearch(value);
-    setHistoryPage(0);
-  }
-
   function switchConverterCurrencies() {
     setConverterFrom(converterTo);
     setConverterTo(converterFrom);
@@ -365,6 +264,13 @@ export function TransferWorkspace() {
   return (
     <>
       <main className="flex-1 space-y-5 px-4 py-5 print:hidden">
+        {selectedTransaction ? (
+          <TransactionDetails
+            tx={selectedTransaction}
+            onBack={() => setSelectedTransactionId(null)}
+          />
+        ) : (
+          <>
         <section className="rounded-2xl bg-card p-4 shadow-sm ring-1 ring-border/80">
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -506,96 +412,7 @@ export function TransferWorkspace() {
           </CardContent>
         </Card>
 
-        <Card className="gap-0 rounded-2xl shadow-sm ring-1 ring-border/80 transition-shadow hover:shadow-md">
-          <CardHeader className="gap-3 pb-3">
-            <SectionHeader icon={Clock} title="Recent activity" />
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-              <Input
-                className="pl-9"
-                placeholder="Search transactions"
-                value={search}
-                onChange={(event) => changeSearch(event.target.value)}
-                aria-label="Search transaction history"
-              />
-            </div>
-          </CardHeader>
-          <CardContent className="border-t border-border/70 pt-1">
-            {visibleTransactions.length > 0 ? (
-              <ul className="divide-y divide-border">
-                {isSending && (
-                  <li className="flex items-center gap-3 py-3" aria-label="Transfer in progress">
-                    <Skeleton className="size-9 shrink-0 rounded-full" />
-                    <div className="min-w-0 flex-1 space-y-2">
-                      <Skeleton className="h-3 w-2/3" />
-                      <Skeleton className="h-2.5 w-1/2" />
-                    </div>
-                    <Skeleton className="h-3 w-16" />
-                  </li>
-                )}
-                {visibleTransactions.map((transaction) => (
-                  <li key={transaction.id}>
-                    <button
-                      type="button"
-                      className="flex w-full items-center gap-3 rounded-xl px-2 py-3 text-left transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      onClick={() => setReceipt(transaction)}
-                      aria-label={`View receipt: ${transaction.title}`}
-                    >
-                      <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-muted">
-                        {transaction.direction === "in"
-                          ? <ArrowDownLeft className="size-4 text-emerald-600" aria-hidden="true" />
-                          : <ArrowRight className="size-4 text-muted-foreground" aria-hidden="true" />}
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-medium">{transaction.title}</span>
-                        <span className="block truncate text-xs text-muted-foreground">
-                          {transaction.memo || transaction.category} · {new Date(transaction.date).toLocaleDateString("en-US")}
-                        </span>
-                      </span>
-                      <span className={`shrink-0 text-sm font-semibold ${transaction.direction === "in" ? "text-emerald-600" : ""}`}>
-                        {transaction.direction === "in" ? "+" : "−"}
-                        {formatAmount(transaction.amount, transaction.currency)}
-                      </span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="py-8 text-center text-sm text-muted-foreground">
-                {search ? "No transactions found." : "No transactions yet."}
-              </p>
-            )}
-            <div className="mt-3 flex items-center justify-between border-t border-border pt-3">
-              <p className="text-xs text-muted-foreground">
-                {filteredTransactions.length === 0
-                  ? "0 results"
-                  : `${historyPage * pageSize + 1}–${Math.min((historyPage + 1) * pageSize, filteredTransactions.length)} of ${filteredTransactions.length}`}
-              </p>
-              <div className="flex gap-1">
-                <Button
-                  size="icon"
-                  type="button"
-                  variant="ghost"
-                  disabled={historyPage === 0}
-                  onClick={() => setHistoryPage((page) => Math.max(0, page - 1))}
-                  aria-label="Previous page"
-                >
-                  <ChevronLeft aria-hidden="true" />
-                </Button>
-                <Button
-                  size="icon"
-                  type="button"
-                  variant="ghost"
-                  disabled={historyPage >= pageCount - 1}
-                  onClick={() => setHistoryPage((page) => Math.min(pageCount - 1, page + 1))}
-                  aria-label="Next page"
-                >
-                  <ChevronRight aria-hidden="true" />
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <RecentActivity onSelectTransaction={setSelectedTransactionId} />
 
         <Card className="gap-0 rounded-2xl shadow-sm ring-1 ring-border/80 transition-shadow hover:shadow-md">
           <CardHeader className="pb-3">
@@ -681,77 +498,10 @@ export function TransferWorkspace() {
             </form>
           </CardContent>
         </Card>
+          </>
+        )}
       </main>
 
-      {receipt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm">
-          <Card className="w-full max-w-sm shadow-xl">
-            <CardHeader className="flex-row items-start justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="size-4 text-gold print:hidden" aria-hidden="true" />
-                  Transfer receipt
-                </CardTitle>
-                <p className="mt-1 text-xs text-muted-foreground">Horizon Finance</p>
-              </div>
-              <Button
-                className="print:hidden"
-                size="icon"
-                type="button"
-                variant="ghost"
-                onClick={() => setReceipt(null)}
-                aria-label="Close receipt"
-              >
-                <X aria-hidden="true" />
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="border-y border-dashed border-border py-3 text-center">
-                <p className="text-xs text-muted-foreground">Transfer amount</p>
-                <p className="mt-1 text-2xl font-semibold">
-                  {formatAmount(receipt.amount, receipt.currency)}
-                </p>
-              </div>
-              <dl className="space-y-2 text-sm">
-                <div className="flex justify-between gap-4">
-                  <dt className="text-muted-foreground">
-                    {receipt.title.startsWith("Transfer to ") ? "Payee" : "Transaction"}
-                  </dt>
-                  <dd className="text-right font-medium">
-                    {receipt.title.startsWith("Transfer to ")
-                      ? receipt.title.replace("Transfer to ", "")
-                      : receipt.title}
-                  </dd>
-                </div>
-                <div className="flex justify-between gap-4">
-                  <dt className="text-muted-foreground">Reference</dt>
-                  <dd className="text-right">{receipt.memo}</dd>
-                </div>
-                <div className="flex justify-between gap-4">
-                  <dt className="text-muted-foreground">Date</dt>
-                  <dd className="text-right">{new Date(receipt.date).toLocaleString("en-US")}</dd>
-                </div>
-                <div className="flex justify-between gap-4">
-                  <dt className="text-muted-foreground">Transaction ID</dt>
-                  <dd className="max-w-40 truncate text-right font-mono text-xs">{receipt.id}</dd>
-                </div>
-              </dl>
-              <Button
-                className="w-full gap-2"
-                type="button"
-                onClick={() => {
-                  if (!printReceipt(receipt)) {
-                    toast.error("Allow pop-ups to print the receipt.");
-                  }
-                }}
-              >
-                <Printer className="size-4" aria-hidden="true" />
-                Print receipt
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      )}
     </>
   );
 }
