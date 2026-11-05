@@ -20,7 +20,6 @@ import {
   X,
 } from "lucide-react";
 import { z } from "zod";
-import { Select as SelectPrimitive } from "radix-ui";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -151,45 +150,61 @@ function CurrencySelect({
   label: string;
   className: string;
 }) {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
-    <SelectPrimitive.Root
-      value={value}
-      onValueChange={(nextValue) => {
-        if (isCurrency(nextValue)) onValueChange(nextValue);
+    <div
+      className="min-w-0"
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+          setIsOpen(false);
+        }
+      }}
+      onKeyDown={(event) => {
+        if (event.key === "Escape") setIsOpen(false);
       }}
     >
-      <SelectPrimitive.Trigger
-        className={`flex items-center justify-between gap-2 rounded-lg border border-input bg-background px-2 text-sm outline-none transition-colors focus-visible:border-gold focus-visible:bg-gold/10 focus-visible:ring-3 focus-visible:ring-gold/30 ${className}`}
+      <button
+        type="button"
+        className={`flex w-full items-center justify-between gap-2 rounded-lg border border-input bg-background px-2 text-sm outline-none transition-colors focus-visible:border-gold focus-visible:bg-gold/10 focus-visible:ring-3 focus-visible:ring-gold/30 ${className}`}
         aria-label={label}
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        onClick={() => setIsOpen((open) => !open)}
       >
-        <SelectPrimitive.Value />
-        <SelectPrimitive.Icon asChild>
-          <ChevronDown className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
-        </SelectPrimitive.Icon>
-      </SelectPrimitive.Trigger>
-      <SelectPrimitive.Portal>
-        <SelectPrimitive.Content
-          className="z-50 max-h-60 min-w-[var(--radix-select-trigger-width)] overflow-y-auto rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-lg"
-          position="popper"
-          sideOffset={4}
+        <span>{value}</span>
+        <ChevronDown
+          className={`size-4 shrink-0 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`}
+          aria-hidden="true"
+        />
+      </button>
+      {isOpen && (
+        <div
+          className="mt-1 max-h-40 overflow-y-auto rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-sm"
+          role="listbox"
+          aria-label={label}
         >
-          <SelectPrimitive.Viewport>
-            {CURRENCIES.map((currency) => (
-              <SelectPrimitive.Item
-                key={currency}
-                value={currency}
-                className="relative flex cursor-pointer select-none items-center rounded-md py-2 pl-3 pr-9 text-sm outline-none data-[highlighted]:bg-gold/20 data-[highlighted]:text-foreground data-[state=checked]:bg-gold/20 data-[state=checked]:font-medium data-[state=checked]:text-gold"
-              >
-                <SelectPrimitive.ItemText>{currency}</SelectPrimitive.ItemText>
-                <SelectPrimitive.ItemIndicator className="absolute right-2 flex items-center text-gold">
-                  <Check className="size-4" aria-hidden="true" />
-                </SelectPrimitive.ItemIndicator>
-              </SelectPrimitive.Item>
-            ))}
-          </SelectPrimitive.Viewport>
-        </SelectPrimitive.Content>
-      </SelectPrimitive.Portal>
-    </SelectPrimitive.Root>
+          {CURRENCIES.map((currency) => (
+            <button
+              key={currency}
+              type="button"
+              role="option"
+              aria-selected={value === currency}
+              className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm outline-none transition-colors hover:bg-gold/20 focus-visible:bg-gold/20 ${
+                value === currency ? "bg-gold/20 font-medium text-gold" : ""
+              }`}
+              onClick={() => {
+                if (isCurrency(currency)) onValueChange(currency);
+                setIsOpen(false);
+              }}
+            >
+              <span>{currency}</span>
+              {value === currency && <Check className="size-4" aria-hidden="true" />}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 

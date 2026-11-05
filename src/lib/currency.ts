@@ -22,7 +22,7 @@ export const rateToUSD: Record<Currency, number> = {
 
 export function formatAmount(amount: number, currency: Currency): string {
   const fixed = currency === "NGN" || currency === "XAF" ? 0 : 2;
-  return `${currencySymbol[currency]}${amount.toLocaleString(undefined, {
+  return `${currencySymbol[currency]}${amount.toLocaleString("en-US", {
     minimumFractionDigits: fixed,
     maximumFractionDigits: fixed,
   })}`;
