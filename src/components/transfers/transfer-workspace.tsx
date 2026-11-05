@@ -153,7 +153,7 @@ export function TransferWorkspace() {
   const [availableUsd, setAvailableUsd] = useState(user.balance / rateToUSD[user.currency]);
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState<Currency>(user.currency);
-  const [payeeId, setPayeeId] = useState(payees[0]?.id ?? "");
+  const [payeeId, setPayeeId] = useState("");
   const [memo, setMemo] = useState("");
   const [transferError, setTransferError] = useState("");
   const [isSending, setIsSending] = useState(false);
@@ -336,6 +336,7 @@ export function TransferWorkspace() {
                     value={payeeId}
                     onChange={(event) => setPayeeId(event.target.value)}
                   >
+                    <option value="">Select a payee</option>
                     {payees.map((payee) => (
                       <option key={payee.id} value={payee.id}>
                         {payee.name} · {payee.currency}
