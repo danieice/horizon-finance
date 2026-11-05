@@ -6,6 +6,7 @@ import {
   ArrowLeftRight,
   ArrowRight,
   Check,
+  ChevronDown,
   Clock,
   ChevronLeft,
   ChevronRight,
@@ -19,6 +20,7 @@ import {
   X,
 } from "lucide-react";
 import { z } from "zod";
+import { Select as SelectPrimitive } from "radix-ui";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -134,12 +136,61 @@ function convertAmount(amount: number, from: Currency, to: Currency): number {
   return (amount / rateToUSD[from]) * rateToUSD[to];
 }
 
-function currencyOptions() {
-  return CURRENCIES.map((currency) => (
-    <option key={currency} value={currency}>
-      {currency}
-    </option>
-  ));
+function isCurrency(value: string): value is Currency {
+  return CURRENCIES.some((currency) => currency === value);
+}
+
+function CurrencySelect({
+  value,
+  onValueChange,
+  label,
+  className,
+}: {
+  value: Currency;
+  onValueChange: (value: Currency) => void;
+  label: string;
+  className: string;
+}) {
+  return (
+    <SelectPrimitive.Root
+      value={value}
+      onValueChange={(nextValue) => {
+        if (isCurrency(nextValue)) onValueChange(nextValue);
+      }}
+    >
+      <SelectPrimitive.Trigger
+        className={`flex items-center justify-between gap-2 rounded-lg border border-input bg-background px-2 text-sm outline-none transition-colors focus-visible:border-gold focus-visible:bg-gold/10 focus-visible:ring-3 focus-visible:ring-gold/30 ${className}`}
+        aria-label={label}
+      >
+        <SelectPrimitive.Value />
+        <SelectPrimitive.Icon asChild>
+          <ChevronDown className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+        </SelectPrimitive.Icon>
+      </SelectPrimitive.Trigger>
+      <SelectPrimitive.Portal>
+        <SelectPrimitive.Content
+          className="z-50 max-h-60 min-w-[var(--radix-select-trigger-width)] overflow-y-auto rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-lg"
+          position="popper"
+          sideOffset={4}
+        >
+          <SelectPrimitive.Viewport>
+            {CURRENCIES.map((currency) => (
+              <SelectPrimitive.Item
+                key={currency}
+                value={currency}
+                className="relative flex cursor-pointer select-none items-center rounded-md py-2 pl-3 pr-9 text-sm outline-none data-[highlighted]:bg-gold/20 data-[highlighted]:text-foreground data-[state=checked]:bg-gold/20 data-[state=checked]:font-medium data-[state=checked]:text-gold"
+              >
+                <SelectPrimitive.ItemText>{currency}</SelectPrimitive.ItemText>
+                <SelectPrimitive.ItemIndicator className="absolute right-2 flex items-center text-gold">
+                  <Check className="size-4" aria-hidden="true" />
+                </SelectPrimitive.ItemIndicator>
+              </SelectPrimitive.Item>
+            ))}
+          </SelectPrimitive.Viewport>
+        </SelectPrimitive.Content>
+      </SelectPrimitive.Portal>
+    </SelectPrimitive.Root>
+  );
 }
 
 export function TransferWorkspace() {
@@ -321,31 +372,12 @@ export function TransferWorkspace() {
             <SectionHeader icon={Send} title="New transfer" />
           </CardHeader>
           <CardContent>
-            <form className="space-y-4 border-t border-border/70 pt-4" onSubmit={submitTransfer} noValidate>
-              <div className="space-y-1.5 text-sm">
-                <span className="flex items-center justify-between gap-2">
-                  <label className="font-medium" htmlFor="payee-select">Payee</label>
-                  <a className="font-medium text-gold underline-offset-4 hover:underline" href="#add-payee">
-                    Add a payee
-                  </a>
-                </span>
-                {payees.length > 0 ? (
-                  <select
-                    id="payee-select"
-                    className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-                    value={payeeId}
-                    onChange={(event) => setPayeeId(event.target.value)}
-                  >
-                    <option value="">Select a payee</option>
-                    {payees.map((payee) => (
-                      <option key={payee.id} value={payee.id}>
-                        {payee.name} · {payee.currency}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <p className="text-xs text-muted-foreground">No saved payees yet.</p>
-                )}
+            <form id="new-transfer" className="space-y-4 border-t border-border/70 pt-4" onSubmit={submitTransfer} noValidate>
+              <div className="flex items-center justify-between gap-2 text-sm">
+                <span className="font-medium">Payee</span>
+                <Button asChild size="sm" variant="outline">
+                  <a href="#add-payee">Add a payee</a>
+                </Button>
               </div>
 
               <div className="grid grid-cols-[1fr_6.5rem] gap-2">
@@ -364,14 +396,12 @@ export function TransferWorkspace() {
                 </label>
                 <label className="space-y-1.5 text-sm">
                   <span className="font-medium">Currency</span>
-                  <select
-                    className="currency-select h-8 w-full rounded-lg border border-input bg-background px-2 text-sm outline-none focus-visible:border-gold focus-visible:bg-gold/10 focus-visible:ring-3 focus-visible:ring-gold/30"
+                  <CurrencySelect
+                    className="h-8 w-full"
                     value={currency}
-                    onChange={(event) => setCurrency(event.target.value as Currency)}
-                    aria-label="Send currency"
-                  >
-                    {currencyOptions()}
-                  </select>
+                    onValueChange={setCurrency}
+                    label="Send currency"
+                  />
                 </label>
               </div>
 
@@ -397,15 +427,10 @@ export function TransferWorkspace() {
               {transferError && (
                 <p className="text-sm text-destructive" role="alert">{transferError}</p>
               )}
-              <Button className="h-10 w-full gap-2" type="submit" disabled={isSending || payees.length === 0}>
+              <Button className="h-10 w-full gap-2" type="submit" disabled={isSending || !payeeId}>
                 {isSending ? <Clock3 className="size-4 animate-pulse" aria-hidden="true" /> : <Send className="size-4" aria-hidden="true" />}
                 {isSending ? "Sending…" : "Send"}
               </Button>
-              {payees.length === 0 && (
-                <p className="text-center text-xs text-muted-foreground">
-                  Add a payee to make a transfer.
-                </p>
-              )}
             </form>
           </CardContent>
         </Card>
@@ -428,14 +453,12 @@ export function TransferWorkspace() {
                 />
               </label>
               <label className="sr-only" htmlFor="converter-from">From currency</label>
-              <select
-                id="converter-from"
-                className="currency-select h-8 rounded-lg border border-input bg-background px-2 text-sm outline-none focus-visible:border-gold focus-visible:bg-gold/10 focus-visible:ring-3 focus-visible:ring-gold/30"
+              <CurrencySelect
+                className="h-8"
                 value={converterFrom}
-                onChange={(event) => setConverterFrom(event.target.value as Currency)}
-              >
-                {currencyOptions()}
-              </select>
+                onValueChange={setConverterFrom}
+                label="From currency"
+              />
             </div>
             <div className="flex items-center justify-center">
               <Button
@@ -453,14 +476,12 @@ export function TransferWorkspace() {
               <span className="text-sm text-muted-foreground">Estimated amount</span>
               <div className="text-right">
                 <label className="sr-only" htmlFor="converter-to">To currency</label>
-                <select
-                  id="converter-to"
-                  className="currency-select mb-1 rounded border border-input bg-background px-1.5 py-0.5 text-xs outline-none focus-visible:border-gold focus-visible:bg-gold/10 focus-visible:ring-3 focus-visible:ring-gold/30"
+                <CurrencySelect
+                  className="mb-1 h-7 text-xs"
                   value={converterTo}
-                  onChange={(event) => setConverterTo(event.target.value as Currency)}
-                >
-                  {currencyOptions()}
-                </select>
+                  onValueChange={setConverterTo}
+                  label="To currency"
+                />
                 <p className="font-semibold">{formatAmount(convertedValue, converterTo)}</p>
               </div>
             </div>
@@ -573,7 +594,21 @@ export function TransferWorkspace() {
                     <p className="truncate text-sm font-medium">{payee.name}</p>
                     <p className="truncate text-xs text-muted-foreground">{payee.accountNumber}</p>
                   </div>
-                  <span className="shrink-0 rounded-full bg-muted px-2.5 py-1 text-xs font-medium">{payee.currency}</span>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium">{payee.currency}</span>
+                    <Button
+                      size="sm"
+                      type="button"
+                      variant={payee.id === payeeId ? "secondary" : "outline"}
+                      disabled={payee.id === payeeId}
+                      onClick={() => {
+                        setPayeeId(payee.id);
+                        document.getElementById("new-transfer")?.scrollIntoView({ behavior: "smooth" });
+                      }}
+                    >
+                      {payee.id === payeeId ? "Selected" : "Use"}
+                    </Button>
+                  </div>
                 </li>
               ))}
               {isAddingPayee && (
@@ -616,14 +651,12 @@ export function TransferWorkspace() {
               </label>
               <label className="block space-y-1.5 text-sm">
                 <span className="text-xs text-muted-foreground">Receiving currency</span>
-                <select
-                  className="currency-select h-9 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:border-gold focus-visible:bg-gold/10 focus-visible:ring-3 focus-visible:ring-gold/30"
+                <CurrencySelect
+                  className="h-9 w-full"
                   value={payeeCurrency}
-                  onChange={(event) => setPayeeCurrency(event.target.value as Currency)}
-                  aria-label="Payee receiving currency"
-                >
-                  {currencyOptions()}
-                </select>
+                  onValueChange={setPayeeCurrency}
+                  label="Payee receiving currency"
+                />
               </label>
               {payeeError && <p className="text-sm text-destructive" role="alert">{payeeError}</p>}
               <Button className="w-full gap-2" type="submit" variant="outline" disabled={isAddingPayee}>
