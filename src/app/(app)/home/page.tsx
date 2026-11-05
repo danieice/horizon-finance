@@ -78,7 +78,7 @@ export default function HomePage() {
 
   return (
     <>
-      <TopBar title={activeTransaction ? "Transaction Details" : "Home"} />
+      <TopBar />
       <main className="flex-1 px-4 py-4 space-y-4">
         {loading ? (
           <AnalyticsSkeleton />

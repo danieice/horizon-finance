@@ -5,7 +5,7 @@ import { TwoFactorAuth } from "@/components/security/two-factor-auth";
 export default function SecurityPage() {
   return (
     <>
-      <TopBar title="Security" />
+      <TopBar />
       <main className="flex-1 space-y-5 px-5 py-5">
         <TwoFactorAuth />
         <SecurityAuditLog />

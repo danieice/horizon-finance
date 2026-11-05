@@ -20,7 +20,7 @@ export default function CardsPage() {
 
   return (
     <>
-      <TopBar title="Cards" />
+      <TopBar />
       <main className="flex-1 space-y-7 px-5 pb-6 pt-5">
         {cards.length > 1 ? (
           <div className="flex gap-2">
