@@ -114,3 +114,8 @@
     @apply font-sans;
   }
 }
+
+.currency-select option:checked {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}

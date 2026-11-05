@@ -322,22 +322,30 @@ export function TransferWorkspace() {
           </CardHeader>
           <CardContent>
             <form className="space-y-4 border-t border-border/70 pt-4" onSubmit={submitTransfer} noValidate>
-              <label className="block space-y-1.5 text-sm">
-                <span className="font-medium">Payee</span>
-                <select
-                  className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-                  value={payeeId}
-                  onChange={(event) => setPayeeId(event.target.value)}
-                  aria-label="Payee"
-                >
-                  <option value="">Choose a payee</option>
-                  {payees.map((payee) => (
-                    <option key={payee.id} value={payee.id}>
-                      {payee.name} · {payee.currency}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <div className="space-y-1.5 text-sm">
+                <span className="flex items-center justify-between gap-2">
+                  <label className="font-medium" htmlFor="payee-select">Payee</label>
+                  <a className="font-medium text-gold underline-offset-4 hover:underline" href="#add-payee">
+                    Add a payee
+                  </a>
+                </span>
+                {payees.length > 0 ? (
+                  <select
+                    id="payee-select"
+                    className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                    value={payeeId}
+                    onChange={(event) => setPayeeId(event.target.value)}
+                  >
+                    {payees.map((payee) => (
+                      <option key={payee.id} value={payee.id}>
+                        {payee.name} · {payee.currency}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <p className="text-xs text-muted-foreground">No saved payees yet.</p>
+                )}
+              </div>
 
               <div className="grid grid-cols-[1fr_6.5rem] gap-2">
                 <label className="space-y-1.5 text-sm">
@@ -356,7 +364,7 @@ export function TransferWorkspace() {
                 <label className="space-y-1.5 text-sm">
                   <span className="font-medium">Currency</span>
                   <select
-                    className="h-8 w-full rounded-lg border border-input bg-background px-2 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                    className="currency-select h-8 w-full rounded-lg border border-input bg-background px-2 text-sm outline-none focus-visible:border-gold focus-visible:bg-gold/10 focus-visible:ring-3 focus-visible:ring-gold/30"
                     value={currency}
                     onChange={(event) => setCurrency(event.target.value as Currency)}
                     aria-label="Send currency"
@@ -421,7 +429,7 @@ export function TransferWorkspace() {
               <label className="sr-only" htmlFor="converter-from">From currency</label>
               <select
                 id="converter-from"
-                className="h-8 rounded-lg border border-input bg-background px-2 text-sm"
+                className="currency-select h-8 rounded-lg border border-input bg-background px-2 text-sm outline-none focus-visible:border-gold focus-visible:bg-gold/10 focus-visible:ring-3 focus-visible:ring-gold/30"
                 value={converterFrom}
                 onChange={(event) => setConverterFrom(event.target.value as Currency)}
               >
@@ -446,7 +454,7 @@ export function TransferWorkspace() {
                 <label className="sr-only" htmlFor="converter-to">To currency</label>
                 <select
                   id="converter-to"
-                  className="mb-1 rounded border border-input bg-background px-1.5 py-0.5 text-xs"
+                  className="currency-select mb-1 rounded border border-input bg-background px-1.5 py-0.5 text-xs outline-none focus-visible:border-gold focus-visible:bg-gold/10 focus-visible:ring-3 focus-visible:ring-gold/30"
                   value={converterTo}
                   onChange={(event) => setConverterTo(event.target.value as Currency)}
                 >
@@ -580,7 +588,7 @@ export function TransferWorkspace() {
                 <li className="py-3 text-sm text-muted-foreground">No saved payees.</li>
               )}
             </ul>
-            <form className="space-y-3 rounded-xl border border-border/70 bg-muted/20 p-3.5" onSubmit={submitPayee} noValidate>
+            <form id="add-payee" className="scroll-mt-4 space-y-3 rounded-xl border border-border/70 bg-muted/20 p-3.5" onSubmit={submitPayee} noValidate>
               <p className="flex items-center gap-2 text-sm font-medium">
                 <Plus className="size-4 text-gold" aria-hidden="true" />
                 Add a payee
@@ -608,7 +616,7 @@ export function TransferWorkspace() {
               <label className="block space-y-1.5 text-sm">
                 <span className="text-xs text-muted-foreground">Receiving currency</span>
                 <select
-                  className="h-9 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                  className="currency-select h-9 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:border-gold focus-visible:bg-gold/10 focus-visible:ring-3 focus-visible:ring-gold/30"
                   value={payeeCurrency}
                   onChange={(event) => setPayeeCurrency(event.target.value as Currency)}
                   aria-label="Payee receiving currency"
