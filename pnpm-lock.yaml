@@ -63,9 +63,6 @@ importers:
       '@eslint/eslintrc':
         specifier: ^3
         version: 3.3.7(supports-color@7.2.0)
-      '@tailwindcss/oxide-linux-x64-gnu':
-        specifier: 4.3.4
-        version: 4.3.4
       '@tailwindcss/postcss':
         specifier: ^4
         version: 4.3.4
@@ -4916,7 +4913,8 @@ snapshots:
   '@tailwindcss/oxide-linux-arm64-musl@4.3.4':
     optional: true
 
-  '@tailwindcss/oxide-linux-x64-gnu@4.3.4': {}
+  '@tailwindcss/oxide-linux-x64-gnu@4.3.4':
+    optional: true
 
   '@tailwindcss/oxide-linux-x64-musl@4.3.4':
     optional: true

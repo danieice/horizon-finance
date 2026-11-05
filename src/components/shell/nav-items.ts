@@ -7,7 +7,7 @@ export type NavItem = {
 };
 
 export const navItems: NavItem[] = [
-  { href: "/", label: "Home", icon: Home },
+  { href: "/home", label: "Home", icon: Home },
   { href: "/cards", label: "Cards", icon: CreditCard },
   { href: "/transfers", label: "Send", icon: Send },
   { href: "/security", label: "Security", icon: Shield },
