@@ -67,7 +67,7 @@ export function RecentActivity({ onSelectTransaction }: RecentActivityProps) {
   };
 
   const filteredTransactions = useMemo(() => {
-    const cleanSearch = sanitizeText(searchQuery).toLowerCase();
+    const cleanSearch = searchQuery.trim().toLowerCase();
 
     return transactions.filter((tx) => {
       // Direction filter
@@ -163,9 +163,6 @@ export function RecentActivity({ onSelectTransaction }: RecentActivityProps) {
         {paginatedTransactions.map((tx) => {
           const Icon = CATEGORY_ICONS[tx.category] || FileText;
           const isIncome = tx.direction === "in";
-          const safeTitle = sanitizeText(tx.title);
-          const safeMemo = sanitizeText(tx.memo);
-
           return (
             <button
               key={tx.id}
@@ -187,10 +184,10 @@ export function RecentActivity({ onSelectTransaction }: RecentActivityProps) {
 
                 <div className="min-w-0">
                   <p className="text-xs font-semibold text-foreground truncate group-hover:text-gold transition-colors">
-                    {safeTitle}
+                    {tx.title}
                   </p>
                   <p className="text-[11px] text-muted-foreground truncate">
-                    {safeMemo || tx.category} · {formatDate(tx.date)}
+                    {tx.memo || tx.category} · {formatDate(tx.date)}
                   </p>
                 </div>
               </div>
